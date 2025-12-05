@@ -76,6 +76,97 @@ export async function deleteComment(req,res) {
   }
 }
 
+export async function getBlogComments(req, res) {
+  try {
+    const { blogId } = req.params;
+    const blogExists = await Blog.findById(blogId);
+      if (!blogExists) {
+        return res.status(404).json({
+                      success: false,
+                      message: "Blog not found"
+        });
+   }
+
+    const comments = await Comment.find({ blog: blogId })
+      .populate("owner", "userName avatar")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      comments
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch comments"
+    });
+  }
+}
+
+export async function updateComment(req, res) {
+  try {
+    const { commentId } = req.params;
+    const { content } = req.body;
+    if (!content || content.trim() === "") {
+        return res.status(400).json({
+          success: false,
+          message: "Updated content is required"
+        });
+      }
+
+    const updated = await Comment.findOneAndUpdate(
+      { _id: commentId, owner: req.user.id },
+      { content },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found or unauthorized"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      updated
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
+export async function getCommentCounts(req,res) {
+try {
+    const{blogId}=req.params
+    const blogExists = await Blog.findById(blogId);
+     if (!blogExists) {
+          return res.status(404).json({
+            success: false,
+            message: "Blog not found"
+          });
+        }
+
+
+    const count = await Comment.countDocuments({ blog: blogId });
+    return res.status(200).json({
+        success: true,
+        count
+      });
+} catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "error in getting counts"
+    });
+}
+}
+
+
 // Always remember ki deleteComment ya deleteLike karne se pahele blog ka existence check karne ki jarurat nahi hai 
 // because If the blog does not exist, the like or comment also cannot exist db simply return null
 
