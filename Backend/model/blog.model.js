@@ -13,7 +13,6 @@ const blogSchema = new Schema({
     },
   coverImage:{
     type:String,// cloudinary url hoga jo 3rd party generate karegi image store karne pr
-    required:true,
    },
   author: {
       type: Schema.Types.ObjectId,
