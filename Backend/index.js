@@ -23,3 +23,5 @@ mongoose.connect(process.env.MONGODB_URL)
       console.log("Mongodb Connected")
     })
     .catch((err => console.log("Error In Mongodb Connection",err)))
+
+// routes import

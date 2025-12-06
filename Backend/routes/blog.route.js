@@ -13,8 +13,7 @@ import { verifyJwt } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.post(
-  "/blogs",
+router.post( "/blogs",
   verifyJwt,
   upload.fields([{ name: "coverImage", maxCount: 1 }]),
   createBlog
