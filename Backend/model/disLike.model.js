@@ -1,14 +1,21 @@
-import mongoose,{Schema} from "mongoose";
-  
-const likeSchema =new Schema({
-   blog:{
-    type:Schema.Types.ObjectId,
-    ref:"Blog"
-  },
-  disLikedBy:{
-    type:Schema.Types.ObjectId,
-    ref:"User"
-  }
-},{timestamps:true})
+import mongoose from "mongoose";
 
-export const Dislike = mongoose.model("Like",likeSchema)
+const disLikeSchema = new mongoose.Schema(
+  {
+    blog: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Blog",
+      required: true,
+    },
+    dislikedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
+
+const Dislike = mongoose.model("Dislike", disLikeSchema);
+
+export default Dislike;

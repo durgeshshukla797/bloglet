@@ -1,56 +1,57 @@
 import Blog from '../model/blog.model.js'
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
-export async function createBlog(req,res) {
-      try {
-        const {title,content}=req.body;
-             if ([title, content].some(field => !field || field.trim() === "")) {
-                      return res.status(400).json({
-                                                success: false,
-                                                message: "All fields are required"
-                                               });
-              }
-  
-  
-  let coverImage = "";
-  if (req.files?.coverImage?.length) {
-    const coverImagePath = req.files.coverImage[0].path;
-    const uploadedImage = await uploadOnCloudinary(coverImagePath);
-  
-    if (!uploadedImage) {
+export async function createBlog(req, res) {
+  try {
+  //  console.log("BODY:", req.body);
+    //console.log("FILES:", req.files);
+
+    const { title, content } = req.body;
+
+    if ([title, content].some(field => !field || field.trim() === "")) {
       return res.status(400).json({
         success: false,
-        message: "Cover image upload failed"
+        message: "All fields are required"
       });
     }
-  
-    coverImage = uploadedImage;
-  }
-  
-  
-  
-        const blog= await Blog.create({
-          title,
-          content,
-          coverImage:coverImage?.url||"",
-          author:req.user.id
-        })
-  
-  
-        return res.status(200)
-                  .json({
-                    success:true,
-                    blog,
-                    message:"Blog created Successfully !!"
-                  })
-      } catch (error) {
-           return res.status(500)
-                  .json({
-                    success:false,
-                    message:error.message||"Error in creating Blog"
-                  })
+
+    let coverImageUrl = "";
+
+    if (req.files?.coverImage?.[0]?.path) {
+      const coverImagePath = req.files.coverImage[0].path;
+      const uploadedImage = await uploadOnCloudinary(coverImagePath);
+
+      if (!uploadedImage?.url) {
+        return res.status(400).json({
+          success: false,
+          message: "Cover image upload failed"
+        });
       }
+
+      coverImageUrl = uploadedImage.url;
+    }
+
+    const blog = await Blog.create({
+      title,
+      content,
+      coverImage: coverImageUrl,
+      author: req.user.id
+    });
+
+    return res.status(200).json({
+      success: true,
+      blog,
+      message: "Blog created Successfully !!"
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Error in creating Blog"
+    });
+  }
 }
+
 
 export async function getAllBlogs(req,res) {
 try {
@@ -120,15 +121,38 @@ export async function updateBlog(req,res) {
       
      try {
       const {blogId} =req.params
- 
-      const updateBlog= await Blog.findOneAndUpdate(
-                              { _id: blogId, author: req.user.id },
-                                req.body,
-                              { new: true }
-                              )
+      
+      let coverImageUrl;
+     if (req.file) { // assuming you're using multer to handle multipart/form-data
+      const uploadResult = await uploadOnCloudinary(req.file.path);
+      if (!uploadResult) {
+        return res.status(500).json({
+          success: false,
+          message: 'Error uploading cover image'
+        });
+      }
+      coverImageUrl = uploadResult.secure_url; // cloudinary url
+    }
+
+        // Build update object
+    const updateData = { ...req.body };
+    if (coverImageUrl) updateData.coverImage = coverImageUrl;
+
+    // Update the blog securely using query-level authorization
+    const updatedBlog = await Blog.findOneAndUpdate(
+      { _id: blogId, author: req.user.id }, // ensures ownership
+      updateData,
+      { new: true }
+    );
+         // just updating text data
+       // const updateBlog= await Blog.findOneAndUpdate(
+      //                         { _id: blogId, author: req.user.id },
+      //                           req.body,
+      //                         { new: true }
+      //                         )
 
       // if Blog doesn’t exist OR user doesn’t own it
-          if (!updateBlog) {
+          if (!updatedBlog) {
               return res.status(403).json({
                                         success: false,
                                         message: "Unauthorized or Blog not found"
@@ -138,7 +162,7 @@ export async function updateBlog(req,res) {
       return res.status(200)
                 .json({
                  success:true,
-                 updateBlog,
+                 updatedBlog,
                  message:"Blog Updated Successfully"
                 })
      } catch (error) {

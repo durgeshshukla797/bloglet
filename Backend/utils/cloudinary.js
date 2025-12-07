@@ -1,8 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config({ quiet: true });
 import {v2 as cloudinary} from 'cloudinary'
 import fs from 'fs';
 
 cloudinary.config({
-  cloud_name:process.env.CLOUDINARY_CLOUD_NAME,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:process.env.CLOUDINARY_API_KEY,
   api_secret:process.env.CLOUDINARY_API_SECRET
 })
@@ -18,9 +20,13 @@ cloudinary.config({
        fs.unlinkSync(localfilepath)
         return response
       } catch (error) {
-        fs.unlinkSync(localfilepath)//remove the locally saved temporary files as the upload got failed
+           if (fs.existsSync(localfilepath)) {
+                     fs.unlinkSync(localfilepath);
+            }
+          console.error("Cloudinary Error:", error.message);
         return null;
       }
+
     }
 
 export {uploadOnCloudinary} 

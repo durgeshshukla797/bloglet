@@ -130,7 +130,8 @@ export async function updateComment(req, res) {
 
     return res.status(200).json({
       success: true,
-      updated
+      updated,
+      message:"Comment Updated Successfully !!"
     });
 
   } catch (error) {

@@ -19,15 +19,31 @@ router.post( "/",
   createBlog
 );
 router.put(
-  "/blogs/:blogId",
+  "/:blogId",
   verifyJwt,
-  upload.fields([{ name: "coverImage", maxCount: 1 }]),
+   upload.single('coverImage'),
   updateBlog
 );
 
 router.get("/", verifyJwt, getAllBlogs);
-router.get("/:blogId", getBlogById);
 router.get("/public", getPublicBlogs);
+router.get("/:blogId", getBlogById);
 router.delete("/:blogId", verifyJwt, deleteBlog);
 
 export default router;
+// till now we have:
+
+// router.get("/:blogId", getBlogById);
+// router.get("/public", getPublicBlogs);
+
+
+// When you request GET /blogs/public, Express matches /:blogId first, and "public" becomes req.params.blogId.
+
+// Then in getBlogById, Mongoose tries to cast "public" to an ObjectId → Cast error.
+
+// 🔹 How to fix
+
+// Move the /public route above /:blogId:
+
+// router.get("/public", getPublicBlogs);  // must come first
+// router.get("/:blogId", getBlogById);    // dynamic route comes last

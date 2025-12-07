@@ -1,30 +1,37 @@
-import { User } from "../model/user.model.js"
+import User  from "../model/user.model.js"
 import bcrypt from 'bcrypt';
 import jwt from "jsonwebtoken"
 import { generateAccessToken } from "../utils/generateAccessToken.js";
 import { generateRefreshToken } from "../utils/generateRefreshToken.js";
 
 async function generateAccessAndRefreshTokens(userId) {
-       
-     try {
-        const accessToken = generateAccessToken(userId)
-        const refreshToken = generateRefreshToken(userId)
-        // ab refresh token ko save bhi karna padega user model me or database
- 
-        const user = await User.findById(userId)
-        user.refreshToken= refreshToken
-        await user.save({validateBeforeSave: false})// validatebeforesave  --> false means ye data ko bina validate kiya database me daal do since it is already verified by auth middleware
- 
-        return {accessToken,refreshToken};
-     } catch (error) {
-         return 
-     }
+  try {
+    //console.log("UserId received:", userId);
+
+    const accessToken = await generateAccessToken(userId);
+    const refreshToken = await generateRefreshToken(userId);
+
+    // console.log("Generated Access Token:", accessToken);
+    // console.log("Generated Refresh Token:", refreshToken);
+
+    const user = await User.findById(userId);
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    console.log("Token Generation Error:", error);
+    throw new Error("Token generation failed");
+  }
 }
+
 
 export async function register(req,res) {
      const{fullname,username,email,password} =req.body;
      
-      if([fullname,username,email,password].some((field)=>{field?.trim()===" "})){
+     // Proper validation - check if any field is empty or only whitespace
+     if(!fullname?.trim() || !username?.trim() || !email?.trim() || !password?.trim()){
        return res.status(400)
                  .json({
                   success:false,
@@ -44,7 +51,7 @@ export async function register(req,res) {
                 })
      }
      
-     const hashPassword = await bcrypt.hash(password,20);
+     const hashPassword = await bcrypt.hash(password,10);//10 will be good other wise server will run slow
 
      const user = await User.create({
       fullname,
@@ -106,8 +113,9 @@ export async function login(req,res) {
                 })
      }
 
-     const{accessToken, refreshToken}= generateAccessAndRefreshTokens(existedUser._id);
-
+     const{accessToken, refreshToken}= await generateAccessAndRefreshTokens(existedUser._id);
+    //  console.log(`AccessToken:${accessToken}`);
+    //   console.log(`RefreshToken:${accessToken}`);
      const safeUser = await User.findById(existedUser._id).select("-email -password")
      if(!safeUser){
       return res.status(500)
@@ -128,7 +136,7 @@ export async function login(req,res) {
                 .json({
                   success: true,
                   message: "User logged In Successfully",
-                  user: loggedInUser,
+                  user: safeUser,
                   accessToken,
                   refreshToken
                 });
@@ -141,7 +149,7 @@ export async function logout(req,res) {
   // after getting user id we'll make refresh token =1 and clear the cookie
   
     await User.findByIdAndUpdate(
-       req.user.id,
+       req.user._id,
       {
          $unset:{
           refreshToken:1
