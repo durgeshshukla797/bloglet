@@ -13,7 +13,7 @@ import { verifyJwt } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.post( "/blogs",
+router.post( "/",
   verifyJwt,
   upload.fields([{ name: "coverImage", maxCount: 1 }]),
   createBlog
@@ -25,9 +25,9 @@ router.put(
   updateBlog
 );
 
-router.get("/blogs", verifyJwt, getAllBlogs);
-router.get("/blogs/:blogId", getBlogById);
-router.get("/public-blogs", getPublicBlogs);
-router.delete("/blogs/:blogId", verifyJwt, deleteBlog);
+router.get("/", verifyJwt, getAllBlogs);
+router.get("/:blogId", getBlogById);
+router.get("/public", getPublicBlogs);
+router.delete("/:blogId", verifyJwt, deleteBlog);
 
 export default router;
