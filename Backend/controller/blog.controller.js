@@ -211,7 +211,7 @@ export async function getBlogById(req, res) {
   try {
     const { blogId } = req.params;
 
-    const blog = await Blog.findById(blogId).populate("author", "fullName");
+    const blog = await Blog.findById(blogId).populate("author", "username fullname");
 
     if (!blog) {
       return res.status(404).json({
@@ -237,7 +237,7 @@ export async function getBlogById(req, res) {
 // Different from getAllBlogs (which is user-specific)
 export async function getPublicBlogs(req, res) {
   try {
-    const blogs = await Blog.find().populate("author", "fullName");//populate() replaces an ObjectId reference with the actual document data from another collection.
+    const blogs = await Blog.find().populate("author", "username fullname");//populate() replaces an ObjectId reference with the actual document data from another collection.
     // Without it:
     // ❌ You only get user IDs
     // ❌ Frontend must make another API call to fetch user data

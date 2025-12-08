@@ -127,7 +127,8 @@ export async function login(req,res) {
       
     const options = {
         httpOnly: true,
-        secure: true
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
     }
 
       return res.status(200)
@@ -160,9 +161,10 @@ export async function logout(req,res) {
       }
     )
     
-     const options = {
-        httpOnly: true,
-        secure: true
+    const options = {
+       httpOnly: true,
+       secure: process.env.NODE_ENV === 'production',
+       sameSite: 'lax'
     }
 
     return res
@@ -185,56 +187,61 @@ export async function refreshToken(req,res) {
   // & fir usi id se db me stored refresh token and aur cookie se liye huye refresh token ko match karayenge 
   // if match then everything perfect and call generateAccessAndRefreshToken with options
   // else refresh token expired
-  const userRefreshToken = req.cookies.refreshToken||req.body.refreshToken
-  if(!userRefreshToken){
+    const userRefreshToken = req.cookies.refreshToken||req.body.refreshToken
+    if(!userRefreshToken){
+        return res.status(401)
+                  .json({
+                        success:false,
+                        message:"Unauthorised request"
+                      }) 
+    }
+
+    try {
+      const decodedToken= jwt.verify(userRefreshToken,process.env.REFRESH_TOKEN_SECRET);
+     
+      const user =await User.findById(decodedToken?.id);
+      if(!user){
+        return res.status(500)
+                  .json({
+                    success:false,
+                    message:"Invalid refresh token"
+                  })
+      }
+      
+      if(userRefreshToken!==user.refreshToken){
+        return res.status(500)
+                  .json({
+                    success:false,
+                    message:"refresh token is expired!"
+                  })
+      }
+    
+      const options={
+        httpOnly:true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      }
+
+      const {accessToken,refreshToken}= await generateAccessAndRefreshTokens(user.id);
+
+      // return safe user data so frontend can restore session state
+      const safeUser = await User.findById(user.id).select('-password -email');
+
+      return res.status(200)
+                    .cookie('accessToken',accessToken, options)
+                    .cookie('refreshToken',refreshToken, options)
+                    .json({
+                      success:true,
+                       accessToken,
+                       refreshToken,
+                       user: safeUser,
+                      message:"Access Token Refreshed!!"
+                    })
+    } catch (error) {
       return res.status(401)
                 .json({
-                      success:false,
-                      message:"Unauthorised request"
-                    }) 
-  }
-
-  try {
-    const decodedToken= jwt.verify(userRefreshToken,process.env.REFRESH_TOKEN_SECRET);
-   
-    const user =await User.findById(decodedToken?.id);
-    if(!user){
-      return res.status(500)
-                .json({
                   success:false,
-                  message:"Invalid refresh token"
+                  message:error.message || "Invalid refresh token !!"
                 })
     }
-    
-    if(userRefreshToken!==user.refreshToken){
-      return res.status(500)
-                .json({
-                  success:false,
-                  message:"refresh token is expired!"
-                })
-    }
-  
-    const options={
-      httpOnly:true,
-      secure:true
-    }
-  
-    const {accessToken,refreshToken}=generateAccessAndRefreshTokens(user.id);
-  
-  return res.status(200)
-                .cookie('accessToken',accessToken)
-                .cookie('newRefreshToken',refreshToken)
-                .json({
-                  success:true,
-                   accessToken,
-                   refreshToken,
-                  message:"Access Token Refreshed!!"
-                })
-  } catch (error) {
-    return res.status(401)
-              .json({
-                success:false,
-                message:error.message || "Invalid refresh token !!"
-              })
-  }
 }

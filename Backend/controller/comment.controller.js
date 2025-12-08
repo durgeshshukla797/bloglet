@@ -88,7 +88,7 @@ export async function getBlogComments(req, res) {
    }
 
     const comments = await Comment.find({ blog: blogId })
-      .populate("owner", "userName avatar")
+      .populate("owner", "username fullname")
       .sort({ createdAt: -1 });
 
     return res.status(200).json({

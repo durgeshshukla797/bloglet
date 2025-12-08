@@ -17,7 +17,11 @@ import reactionRouter from './routes/reaction.route.js'
 const app = express();
 
 // middlewares
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000", // frontend URL
+  credentials: true               // allow cookies
+}));
+
 app.use(express.json());
 app.use(cookieParser());
 
