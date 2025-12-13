@@ -1,24 +1,38 @@
-# Bloglet Frontend
+# BlogApp Frontend
 
-This is the React + Vite frontend for Bloglet.
+A production-ready MERN blog website frontend built with React (Vite), Tailwind CSS, and React Router.
 
-Tech:
-- React + Vite
-- Tailwind CSS (dark-only)
-- Axios (withCredentials)
-- React Router DOM
-- Context API for auth
-- Framer Motion for transitions
+## Features
 
-Quick start:
+- 🏠 Home page with blog cards grid
+- 📝 Blog details page with reactions and comments
+- 👤 User profile page
+- 🔐 Authentication (Login/Register)
+- ❤️ Like/Dislike functionality
+- 💬 Comments system with CRUD operations
+- 🎨 Clean black-and-white dark theme
 
-```powershell
-cd frontend; npm install
+## Setup
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Start development server:
+```bash
 npm run dev
 ```
 
-Notes:
-- The axios base URL is `http://localhost:4000/api` in `src/services/axios.js`.
-- Auth endpoints used: `/auth/login`, `/auth/register`, `/auth/logout`, `/auth/refresh`.
-- Upload endpoint used: `/upload` (multipart-form expected).
-- Protected routes are defined in `src/routes/AppRoutes.jsx`.
+3. Build for production:
+```bash
+npm run build
+```
+
+## Backend Configuration
+
+Make sure your backend is running on `http://localhost:4001` and the CORS is configured to allow `http://localhost:5173`.
+
+## Environment Variables
+
+The API base URL is configured in `src/services/api.js`. Update it if your backend runs on a different port.

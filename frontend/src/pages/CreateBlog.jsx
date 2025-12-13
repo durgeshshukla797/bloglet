@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { blogAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProtectedRoute from '../components/ProtectedRoute';
 
-const EditBlog = () => {
-  const { id } = useParams();
+const CreateBlog = () => {
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
@@ -14,39 +15,8 @@ const EditBlog = () => {
     coverImage: null,
   });
   const [preview, setPreview] = useState(null);
-  const [existingImage, setExistingImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchBlog();
-  }, [id]);
-
-  const fetchBlog = async () => {
-    try {
-      setFetchLoading(true);
-      const response = await blogAPI.getBlogById(id);
-      if (response.data.success) {
-        const blog = response.data.blog;
-        setFormData({
-          title: blog.title || '',
-          content: blog.content || '',
-          coverImage: null,
-        });
-        if (blog.coverImage) {
-          setExistingImage(blog.coverImage);
-        }
-      } else {
-        setError('Blog not found');
-      }
-    } catch (err) {
-      setError('Failed to load blog. Please try again.');
-      console.error('Error fetching blog:', err);
-    } finally {
-      setFetchLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -60,7 +30,6 @@ const EditBlog = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
-        setExistingImage(null); // Clear existing image when new one is selected
       };
       reader.readAsDataURL(file);
     } else {
@@ -83,32 +52,18 @@ const EditBlog = () => {
 
     setLoading(true);
     try {
-      const response = await blogAPI.updateBlog(id, formData);
+      const response = await blogAPI.createBlog(formData);
       if (response.data.success) {
         navigate('/profile');
       } else {
-        setError(response.data.message || 'Failed to update blog');
+        setError(response.data.message || 'Failed to create blog');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update blog. Please try again.');
+      setError(err.response?.data?.message || 'Failed to create blog. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  if (fetchLoading) {
-    return (
-      <ProtectedRoute>
-        <div className="min-h-screen flex flex-col bg-black">
-          <Navbar />
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-white text-xl">Loading...</div>
-          </div>
-          <Footer />
-        </div>
-      </ProtectedRoute>
-    );
-  }
 
   return (
     <ProtectedRoute>
@@ -117,7 +72,7 @@ const EditBlog = () => {
         
         <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-8">
-            <h1 className="text-3xl font-bold text-white mb-6">Edit Blog</h1>
+            <h1 className="text-3xl font-bold text-white mb-6">Create New Blog</h1>
 
             {error && (
               <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded mb-6">
@@ -160,20 +115,9 @@ const EditBlog = () => {
                 />
                 {preview && (
                   <div className="mt-4">
-                    <p className="text-gray-400 text-sm mb-2">New Image Preview:</p>
                     <img
                       src={preview}
                       alt="Preview"
-                      className="max-w-full h-64 object-cover rounded-lg"
-                    />
-                  </div>
-                )}
-                {existingImage && !preview && (
-                  <div className="mt-4">
-                    <p className="text-gray-400 text-sm mb-2">Current Image:</p>
-                    <img
-                      src={existingImage}
-                      alt="Current"
                       className="max-w-full h-64 object-cover rounded-lg"
                     />
                   </div>
@@ -202,7 +146,7 @@ const EditBlog = () => {
                   disabled={loading}
                   className="flex-1 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Updating...' : 'Update Blog'}
+                  {loading ? 'Creating...' : 'Create Blog'}
                 </button>
                 <button
                   type="button"
@@ -222,5 +166,5 @@ const EditBlog = () => {
   );
 };
 
-export default EditBlog;
+export default CreateBlog;
 

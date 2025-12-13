@@ -3,7 +3,43 @@ import Dislike from "../model/disLike.model.js";
 import Blog from "../model/blog.model.js";
 
 /**
- * Get full reaction status for a blog:
+ * Get public reaction counts (no authentication required):
+ * - Total Likes
+ * - Total Dislikes
+ */
+export async function getPublicReactionCounts(req, res) {
+  try {
+    const { blogId } = req.params;
+
+    const blogExists = await Blog.findById(blogId);
+    if (!blogExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found"
+      });
+    }
+
+    const [likes, dislikes] = await Promise.all([
+      Like.countDocuments({ blog: blogId }),
+      Dislike.countDocuments({ blog: blogId })
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      likes,
+      dislikes
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching reaction counts"
+    });
+  }
+}
+
+/**
+ * Get full reaction status for a blog (requires authentication):
  * - Total Likes
  * - Total Dislikes
  * - Is current user liked?

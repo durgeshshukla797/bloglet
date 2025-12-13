@@ -1,4 +1,7 @@
 import mongoose, { Schema } from "mongoose";
+import Like from '../model/like.model.js'
+import Dislike from '../model/disLike.model.js'
+import Comment from '../model/comment.model.js'
 
 const blogSchema = new Schema({
   title:{
@@ -20,6 +23,19 @@ const blogSchema = new Schema({
       required: true,
     },
 },{timestamps:true})
+
+blogSchema.pre("findOneAndDelete", async function () {
+  const blogId = this.getQuery()._id;
+
+  if (!blogId) return;
+
+  await Promise.all([
+    Comment.deleteMany({ blog: blogId }),
+    Like.deleteMany({ blog: blogId }),
+    Dislike.deleteMany({ blog: blogId })
+  ]);
+});
+
 
 const Blog = mongoose.model('Blog',blogSchema)
 

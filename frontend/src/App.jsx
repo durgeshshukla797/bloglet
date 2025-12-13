@@ -1,18 +1,29 @@
-import React from 'react'
-import Navbar from './components/Layout/Navbar'
-import Footer from './components/Layout/Footer'
-import AppRoutes from './routes/AppRoutes'
-import Toast from './components/Utils/Toast'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Home from './pages/Home';
+import BlogDetails from './pages/BlogDetails';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import CreateBlog from './pages/CreateBlog';
+import EditBlog from './pages/EditBlog';
 
-export default function App() {
+function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-black text-zinc-200">
-      <Navbar />
-      <main className="flex-1">
-        <AppRoutes />
-      </main>
-      <Footer />
-      <Toast />
-    </div>
-  )
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/blog/:id" element={<BlogDetails />} />
+          <Route path="/blog/create" element={<CreateBlog />} />
+          <Route path="/blog/:id/edit" element={<EditBlog />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
 }
+
+export default App;
