@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { blogAPI, authAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import UserBlogCard from '../components/UserBlogCard';
 import ProtectedRoute from '../components/ProtectedRoute';
-import { FiPlus } from 'react-icons/fi';
+import Button from '../components/ui/Button';
+import Loader from '../components/ui/Loader';
+import Card from '../components/ui/Card';
+import { FiPlus, FiUser, FiMail, FiCalendar } from 'react-icons/fi';
 
 const Profile = () => {
   const { user: authUser, setUser } = useAuth();
@@ -16,7 +17,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     fetchUserProfile();
@@ -29,20 +29,13 @@ const Profile = () => {
       const response = await authAPI.getCurrentUser();
       if (response.data.success) {
         setUserProfile(response.data.user);
-        // Update auth context with fresh user data
-        const updatedUser = {
-          ...authUser,
-          ...response.data.user,
-        };
+        const updatedUser = { ...authUser, ...response.data.user };
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // Fallback to auth context user if API fails
-      if (authUser) {
-        setUserProfile(authUser);
-      }
+      if (authUser) setUserProfile(authUser);
     } finally {
       setUserLoading(false);
     }
@@ -66,10 +59,8 @@ const Profile = () => {
 
   const handleDelete = async (blogId) => {
     try {
-      setDeletingId(blogId);
       const response = await blogAPI.deleteBlog(blogId);
       if (response.data.success) {
-        // Remove blog from state immediately for instant UI update
         setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog._id !== blogId));
       } else {
         alert('Failed to delete blog. Please try again.');
@@ -77,121 +68,91 @@ const Profile = () => {
     } catch (error) {
       console.error('Error deleting blog:', error);
       alert(error.response?.data?.message || 'Failed to delete blog. Please try again.');
-    } finally {
-      setDeletingId(null);
     }
   };
 
   const displayUser = user || authUser;
 
-  if (!displayUser) {
-    return null;
-  }
-
-  // Get joined date from user data
-  const getJoinedDate = () => {
-    if (displayUser.createdAt) {
-      return new Date(displayUser.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    }
-    return 'Recently';
-  };
+  if (!displayUser) return null;
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex flex-col bg-black">
-        <Navbar />
-        
-        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-          {/* User Profile Section */}
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-8 mb-12">
-            {userLoading ? (
-              <div className="text-center py-8">
-                <div className="text-white text-xl">Loading profile...</div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+        {/* User Profile Section */}
+        <div className="mb-16">
+          <div className="relative">
+            <div className="h-48 rounded-2xl bg-gradient-to-r from-primary-900 to-indigo-900 border border-white/5 overflow-hidden">
+              <div className="absolute inset-0 bg-dark-bg/20 backdrop-blur-sm" />
+            </div>
+            <div className="absolute -bottom-12 left-8 md:left-12 flex items-end">
+              <div className="w-32 h-32 rounded-2xl bg-dark-card border-4 border-dark-bg flex items-center justify-center text-5xl font-bold font-heading text-white shadow-xl relative overflow-hidden">
+                {userLoading ? (
+                  <Loader size="sm" />
+                ) : (
+                  <span className="bg-gradient-to-br from-primary-400 to-indigo-500 bg-clip-text text-transparent">
+                    {displayUser.fullname?.charAt(0).toUpperCase() || 'U'}
+                  </span>
+                )}
               </div>
+            </div>
+          </div>
+
+          <div className="pt-16 pl-4 md:pl-8">
+            {userLoading ? (
+              <div className="h-20 animate-pulse bg-slate-800 rounded-lg max-w-sm" />
             ) : (
-              <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
-                {/* Profile Image Placeholder */}
-                <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center text-3xl font-bold text-white">
-                  {displayUser.fullname?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white mb-2">
-                    {displayUser.fullname || 'User'}
-                  </h1>
-                  <p className="text-gray-400 mb-1">@{displayUser.username}</p>
-                  <p className="text-gray-400 mb-4">{displayUser.email}</p>
-                  <p className="text-gray-500 text-sm">
-                    Joined on {getJoinedDate()}
-                  </p>
+              <div>
+                <h1 className="text-4xl font-bold font-heading text-white mb-2">{displayUser.fullname}</h1>
+                <div className="flex flex-wrap gap-4 text-slate-400 text-sm">
+                  <div className="flex items-center"><FiUser className="mr-2" /> @{displayUser.username}</div>
+                  <div className="flex items-center"><FiMail className="mr-2" /> {displayUser.email}</div>
+                  <div className="flex items-center"><FiCalendar className="mr-2" /> Joined {new Date(displayUser.createdAt).toLocaleDateString()}</div>
                 </div>
               </div>
             )}
           </div>
+        </div>
 
-          {/* User's Blogs Section */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">
-                My Blogs ({blogs.length})
-              </h2>
-              <button
-                onClick={() => navigate('/blog/create')}
-                className="flex items-center space-x-2 bg-white text-black px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
-              >
-                <FiPlus className="w-5 h-5" />
-                <span>Create Blog</span>
-              </button>
+        {/* User's Blogs Section */}
+        <div>
+          <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-4">
+            <h2 className="text-2xl font-bold font-heading text-white">My Stories <span className="text-slate-500 text-lg">({blogs.length})</span></h2>
+            <Button onClick={() => navigate('/blog/create')}>
+              <FiPlus className="mr-2" /> Write Story
+            </Button>
+          </div>
+
+          {loading ? (
+            <Loader size="lg" />
+          ) : error ? (
+            <div className="text-center py-20 bg-dark-card/30 rounded-xl border border-red-500/20">
+              <div className="text-red-400 text-xl mb-4">{error}</div>
+              <Button onClick={fetchUserBlogs} variant="outline">Try Again</Button>
             </div>
-
-            {loading ? (
-              <div className="text-center py-20">
-                <div className="text-white text-xl">Loading your blogs...</div>
-              </div>
-            ) : error ? (
-              <div className="text-center py-20">
-                <div className="text-red-400 text-xl mb-4">{error}</div>
-                <button
-                  onClick={fetchUserBlogs}
-                  className="bg-white text-black px-6 py-2 rounded hover:bg-gray-200 transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : blogs.length === 0 ? (
-              <div className="text-center py-20 bg-gray-900 rounded-lg border border-gray-800">
-                <div className="text-gray-400 text-xl mb-4">You haven't created any blogs yet.</div>
-                <button
-                  onClick={() => navigate('/blog/create')}
-                  className="flex items-center space-x-2 bg-white text-black px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors font-semibold mx-auto"
-                >
-                  <FiPlus className="w-5 h-5" />
-                  <span>Create Your First Blog</span>
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {blogs.map((blog) => (
+          ) : blogs.length === 0 ? (
+            <div className="text-center py-24 bg-dark-card/30 rounded-2xl border border-slate-800 border-dashed">
+              <h3 className="text-xl text-white font-medium mb-2">No stories yet</h3>
+              <p className="text-slate-400 mb-6 max-w-md mx-auto">Share your thoughts with the world. Create your first blog post today.</p>
+              <Button onClick={() => navigate('/blog/create')} size="lg">
+                <FiPlus className="mr-2" /> Create Your First Story
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogs.map((blog, index) => (
+                <div key={blog._id} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
                   <UserBlogCard
-                    key={blog._id}
                     blog={blog}
                     onDelete={handleDelete}
                   />
-                ))}
-              </div>
-            )}
-          </div>
-        </main>
-
-        <Footer />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </ProtectedRoute>
   );
 };
 
 export default Profile;
-

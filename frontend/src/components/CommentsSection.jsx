@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { commentAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { FiEdit2, FiTrash2, FiSend } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiSend, FiMessageSquare } from 'react-icons/fi';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Card from './ui/Card';
 
 const CommentsSection = ({ blogId }) => {
   const [comments, setComments] = useState([]);
@@ -110,98 +113,96 @@ const CommentsSection = ({ blogId }) => {
   };
 
   return (
-    <div className="mt-12">
-      <h2 className="text-2xl font-bold text-white mb-6">
-        Comments <span className="text-gray-400 text-lg">({commentCount})</span>
+    <div className="mt-12 bg-dark-card/30 rounded-2xl p-6 sm:p-8 border border-slate-800">
+      <h2 className="text-2xl font-bold text-white mb-8 flex items-center">
+        <FiMessageSquare className="mr-3 text-primary-500" />
+        Comments <span className="text-slate-500 text-lg ml-2">({commentCount})</span>
       </h2>
 
       {/* Add Comment Form */}
-      {isAuthenticated && (
-        <form onSubmit={handleSubmit} className="mb-8">
-          <div className="flex space-x-2">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a comment..."
-              className="flex-1 bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 resize-none"
-              rows="3"
-            />
-            <button
-              type="submit"
-              disabled={loading || !newComment.trim()}
-              className="bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              <FiSend className="w-5 h-5" />
-              <span>Post</span>
-            </button>
+      {isAuthenticated ? (
+        <form onSubmit={handleSubmit} className="mb-10">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-grow">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="What are your thoughts?"
+                className="w-full bg-dark-bg border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 resize-none min-h-[100px]"
+              />
+            </div>
+            <div className="flex-shrink-0">
+              <Button type="submit" loading={loading} disabled={!newComment.trim()}>
+                <FiSend className="mr-2" /> Post
+              </Button>
+            </div>
           </div>
         </form>
+      ) : (
+        <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4 mb-8 text-center text-primary-200">
+          Please login to join the discussion.
+        </div>
       )}
 
       {/* Comments List */}
       <div className="space-y-6">
         {comments.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">No comments yet. Be the first to comment!</p>
+          <div className="text-center py-12 text-slate-500 bg-dark-bg/50 rounded-lg border border-slate-800 border-dashed">
+            No comments yet. Be the first to start the conversation!
+          </div>
         ) : (
           comments.map((comment) => (
-            <div key={comment._id} className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-              {editingId === comment._id ? (
-                <div>
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 resize-none mb-3"
-                    rows="3"
-                  />
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(comment._id)}
-                      disabled={loading || !editContent.trim()}
-                      className="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
-                    >
-                      Cancel
-                    </button>
+            <div key={comment._id} className="group animate-fade-in">
+              <div className="flex space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600 font-bold text-slate-300">
+                    {comment.owner?.fullname?.charAt(0).toUpperCase() || '?'}
                   </div>
                 </div>
-              ) : (
-                <>
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="text-white font-semibold">
-                        {comment.owner?.fullname || 'Unknown User'}
-                      </p>
-                      <p className="text-gray-400 text-sm">
-                        {new Date(comment.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    {isAuthenticated && isOwner(comment) && (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => startEdit(comment)}
-                          className="text-gray-400 hover:text-white transition-colors"
-                          title="Edit"
-                        >
-                          <FiEdit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(comment._id)}
-                          className="text-gray-400 hover:text-red-400 transition-colors"
-                          title="Delete"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
+                <div className="flex-grow">
+                  <div className="bg-dark-bg rounded-2xl p-4 border border-slate-800">
+                    {editingId === comment._id ? (
+                      <div className="space-y-3">
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          className="w-full bg-dark-card border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                          rows="3"
+                        />
+                        <div className="flex space-x-2 justify-end">
+                          <Button size="sm" variant="ghost" onClick={cancelEdit}>Cancel</Button>
+                          <Button size="sm" onClick={() => handleEdit(comment._id)} loading={loading}>Save</Button>
+                        </div>
                       </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-white">{comment.owner?.fullname || 'Unknown User'}</h4>
+                          <span className="text-xs text-slate-500">{new Date(comment.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+                      </>
                     )}
                   </div>
-                  <p className="text-gray-300 whitespace-pre-wrap">{comment.content}</p>
-                </>
-              )}
+
+                  {isAuthenticated && isOwner(comment) && !editingId && (
+                    <div className="flex space-x-4 mt-2 ml-4">
+                      <button
+                        onClick={() => startEdit(comment)}
+                        className="text-xs text-slate-500 hover:text-primary-400 flex items-center transition-colors"
+                      >
+                        <FiEdit2 className="mr-1" /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(comment._id)}
+                        className="text-xs text-slate-500 hover:text-red-400 flex items-center transition-colors"
+                      >
+                        <FiTrash2 className="mr-1" /> Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ))
         )}
@@ -211,4 +212,3 @@ const CommentsSection = ({ blogId }) => {
 };
 
 export default CommentsSection;
-

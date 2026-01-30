@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { blogAPI, reactionAPI } from '../services/api';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import Like from '../components/Like';
 import Dislike from '../components/Dislike';
 import CommentsSection from '../components/CommentsSection';
+import Loader from '../components/ui/Loader';
+import Badge from '../components/ui/Badge';
+import { FiUser, FiCalendar, FiClock } from 'react-icons/fi';
 
 const BlogDetails = () => {
   const { id } = useParams();
@@ -39,7 +40,7 @@ const BlogDetails = () => {
   const fetchReactionStatus = useCallback(async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
-      
+
       // Always fetch public counts first
       const publicResponse = await reactionAPI.getPublicReactionCounts(id);
       if (publicResponse.data.success) {
@@ -63,7 +64,6 @@ const BlogDetails = () => {
             });
           }
         } catch (authError) {
-          // If auth request fails, we still have the public counts
           console.error('Error fetching user reaction status:', authError);
         }
       }
@@ -77,7 +77,6 @@ const BlogDetails = () => {
   }, [fetchBlog]);
 
   useEffect(() => {
-    // Fetch reaction status after blog is loaded
     if (blog) {
       fetchReactionStatus();
     }
@@ -86,103 +85,88 @@ const BlogDetails = () => {
   const handleReactionUpdate = useCallback((type, newCount, newState) => {
     setReactionStatus((prev) => {
       if (type === 'like') {
-        // Backend automatically removes dislike when like is added
         return {
           ...prev,
           likes: newCount,
           isLiked: newState,
-          // If we're liking and previously disliked, the backend removes the dislike
           ...(newState && prev.isDisliked ? { isDisliked: false, dislikes: Math.max(0, prev.dislikes - 1) } : {}),
         };
       } else if (type === 'dislike') {
-        // Backend automatically removes like when dislike is added
         return {
           ...prev,
           dislikes: newCount,
           isDisliked: newState,
-          // If we're disliking and previously liked, the backend removes the like
           ...(newState && prev.isLiked ? { isLiked: false, likes: Math.max(0, prev.likes - 1) } : {}),
         };
       }
       return prev;
     });
-    // Refetch to ensure sync with backend
-    setTimeout(() => {
-      fetchReactionStatus();
-    }, 500);
+    setTimeout(() => fetchReactionStatus(), 500);
   }, [fetchReactionStatus]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-black">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-white text-xl">Loading...</div>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <Loader className="min-h-screen" />;
   }
 
   if (!blog) {
-    return (
-      <div className="min-h-screen flex flex-col bg-black">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-white text-xl">Blog not found</div>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <div className="text-center text-white text-xl py-20">Blog not found</div>;
   }
 
   const authorName = blog.author?.fullname || 'Unknown Author';
+  // Calculate read time
+  const readTime = Math.max(1, Math.ceil((blog.content?.split(' ').length || 0) / 200));
 
   return (
-    <div className="min-h-screen flex flex-col bg-black">
-      <Navbar />
-      
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        {/* Cover Image */}
-        {blog.coverImage && (
-          <div className="w-full mb-8 rounded-lg overflow-hidden">
-            <img
-              src={blog.coverImage}
-              alt={blog.title}
-              className="w-full h-auto max-h-[600px] object-contain"
-            />
-          </div>
-        )}
-
-        {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full animate-fade-in">
+      {/* Blog Metadata */}
+      <div className="mb-8">
+        <Badge variant="primary" className="mb-4">Development</Badge> {/* Placeholder for category */}
+        <h1 className="text-4xl md:text-5xl font-bold font-heading text-white mb-6 leading-tight">
           {blog.title}
         </h1>
 
-        {/* Author */}
-        <div className="mb-8">
-          <p className="text-gray-400">
-            By <span className="text-white font-semibold">{authorName}</span>
-            {' • '}
-            <span className="text-gray-500">
-              {new Date(blog.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </span>
-          </p>
-        </div>
-
-        {/* Content */}
-        <div className="prose prose-invert max-w-none mb-12">
-          <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
-            {blog.content}
+        <div className="flex flex-wrap items-center gap-6 text-sm text-slate-400 border-b border-slate-800 pb-8">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center mr-3 border border-slate-600">
+              <FiUser className="w-5 h-5 text-slate-300" />
+            </div>
+            <div>
+              <span className="block text-white font-medium">{authorName}</span>
+              <span className="text-xs">Author</span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <FiCalendar className="mr-2" />
+            {new Date(blog.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+          <div className="flex items-center">
+            <FiClock className="mr-2" />
+            {readTime} min read
           </div>
         </div>
+      </div>
 
-        {/* Interaction Buttons */}
-        <div className="flex justify-center items-center space-x-4 mb-12">
+      {/* Cover Image */}
+      {blog.coverImage && (
+        <div className="w-full mb-10 rounded-xl overflow-hidden shadow-2xl shadow-black/50">
+          <img
+            src={blog.coverImage}
+            alt={blog.title}
+            className="w-full h-auto max-h-[600px] object-cover"
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="prose prose-invert prose-lg max-w-none mb-12">
+        <div className="text-slate-300 leading-8 whitespace-pre-wrap">
+          {blog.content}
+        </div>
+      </div>
+
+      {/* Interaction Buttons */}
+      <div className="flex items-center justify-between border-t border-b border-slate-800 py-6 mb-12">
+        <div className="flex items-center space-x-6">
           <Like
             blogId={id}
             initialCount={reactionStatus.likes}
@@ -196,15 +180,15 @@ const BlogDetails = () => {
             onUpdate={(count, state) => handleReactionUpdate('dislike', count, state)}
           />
         </div>
+        <div className="text-slate-500 text-sm">
+          Share this post
+        </div>
+      </div>
 
-        {/* Comments Section */}
-        <CommentsSection blogId={id} />
-      </main>
-
-      <Footer />
+      {/* Comments Section */}
+      <CommentsSection blogId={id} />
     </div>
   );
 };
 
 export default BlogDetails;
-

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { blogAPI } from '../services/api';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import ProtectedRoute from '../components/ProtectedRoute';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Card from '../components/ui/Card';
+import Loader from '../components/ui/Loader';
+import { FiImage, FiSave, FiX } from 'react-icons/fi';
 
 const EditBlog = () => {
   const { id } = useParams();
@@ -52,22 +55,16 @@ const EditBlog = () => {
     const { name, value, files } = e.target;
     if (name === 'coverImage' && files && files[0]) {
       const file = files[0];
-      setFormData({
-        ...formData,
-        coverImage: file,
-      });
+      setFormData({ ...formData, coverImage: file });
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
-        setExistingImage(null); // Clear existing image when new one is selected
+        setExistingImage(null);
       };
       reader.readAsDataURL(file);
     } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
+      setFormData({ ...formData, [name]: value });
     }
     setError('');
   };
@@ -99,128 +96,99 @@ const EditBlog = () => {
   if (fetchLoading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen flex flex-col bg-black">
-          <Navbar />
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-white text-xl">Loading...</div>
-          </div>
-          <Footer />
-        </div>
+        <Loader className="min-h-screen" />
       </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex flex-col bg-black">
-        <Navbar />
-        
-        <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-8">
-            <h1 className="text-3xl font-bold text-white mb-6">Edit Blog</h1>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold font-heading text-white">Edit Story</h1>
+          <Button variant="ghost" onClick={() => navigate('/profile')}>
+            <FiX className="mr-2" /> Cancel
+          </Button>
+        </div>
 
-            {error && (
-              <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded mb-6">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="title" className="block text-gray-300 mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  maxLength={150}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600"
-                  placeholder="Enter blog title"
-                />
-                <p className="text-gray-500 text-sm mt-1">
-                  {formData.title.length}/150 characters
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="coverImage" className="block text-gray-300 mb-2">
-                  Cover Image
-                </label>
-                <input
-                  type="file"
-                  id="coverImage"
-                  name="coverImage"
-                  accept="image/*"
-                  onChange={handleChange}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-200"
-                />
-                {preview && (
-                  <div className="mt-4">
-                    <p className="text-gray-400 text-sm mb-2">New Image Preview:</p>
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      className="max-w-full h-64 object-cover rounded-lg"
-                    />
-                  </div>
-                )}
-                {existingImage && !preview && (
-                  <div className="mt-4">
-                    <p className="text-gray-400 text-sm mb-2">Current Image:</p>
-                    <img
-                      src={existingImage}
-                      alt="Current"
-                      className="max-w-full h-64 object-cover rounded-lg"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="content" className="block text-gray-300 mb-2">
-                  Content *
-                </label>
-                <textarea
-                  id="content"
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  required
-                  rows="15"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 resize-none"
-                  placeholder="Write your blog content here..."
-                />
-              </div>
-
-              <div className="flex space-x-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Updating...' : 'Update Blog'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/profile')}
-                  className="px-6 bg-gray-800 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6">
+            {error}
           </div>
-        </main>
+        )}
 
-        <Footer />
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Cover Image Upload */}
+          <div className="relative group">
+            <div className={`
+                 w-full h-64 sm:h-80 rounded-xl border-2 border-dashed border-slate-700 
+                 flex flex-col items-center justify-center cursor-pointer overflow-hidden
+                 transition-colors hover:border-primary-500/50 hover:bg-slate-800/50
+                 ${(preview || existingImage) ? 'border-none' : ''}
+              `}>
+              <input
+                type="file"
+                name="coverImage"
+                accept="image/*"
+                onChange={handleChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+
+              {(preview || existingImage) ? (
+                <img
+                  src={preview || existingImage}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-center text-slate-400">
+                  <FiImage className="w-12 h-12 mx-auto mb-3 text-slate-500" />
+                  <p className="font-medium">Click to upload cover image</p>
+                </div>
+              )}
+
+              {(preview || existingImage) && (
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                  <p className="text-white font-medium">Click to change image</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Card className="p-6 sm:p-8 space-y-6 bg-dark-card/50">
+            <Input
+              label="Title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="Enter your story title..."
+              className="text-2xl font-bold placeholder:font-normal"
+              required
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Content</label>
+              <textarea
+                name="content"
+                value={formData.content}
+                onChange={handleChange}
+                placeholder="Tell your story..."
+                required
+                rows="15"
+                className="w-full bg-dark-bg border border-slate-700 rounded-lg px-4 py-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 resize-none leading-relaxed text-lg"
+              />
+            </div>
+          </Card>
+
+          <div className="flex justify-end pt-4">
+            <Button type="submit" loading={loading} size="lg" className="px-8">
+              <FiSave className="mr-2" /> Update Story
+            </Button>
+          </div>
+        </form>
       </div>
     </ProtectedRoute>
   );
 };
 
 export default EditBlog;
-

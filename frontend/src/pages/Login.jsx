@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Card from '../components/ui/Card';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -42,76 +43,63 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-black">
-      <Navbar />
-      
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-8">
-            <h2 className="text-3xl font-bold text-white mb-6 text-center">Login</h2>
-            
-            {error && (
-              <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded mb-4">
-                {error}
-              </div>
-            )}
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4 animate-fade-in relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="username" className="block text-gray-300 mb-2">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600"
-                  placeholder="Enter your username"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-gray-300 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600"
-                  placeholder="Enter your password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Logging in...' : 'Login'}
-              </button>
-            </form>
-
-            <p className="mt-6 text-center text-gray-400">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-white hover:underline">
-                Register here
-              </Link>
-            </p>
-          </div>
+      <Card className="w-full max-w-md p-8 sm:p-10 border-slate-700/50 shadow-2xl">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold font-heading text-white mb-2">Welcome Back</h2>
+          <p className="text-slate-400">Sign in to continue to Bloglet</p>
         </div>
-      </main>
 
-      <Footer />
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <Input
+            label="Username"
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            placeholder="Enter your username"
+          />
+
+          <Input
+            label="Password"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            placeholder="Enter your password"
+          />
+
+          <Button
+            type="submit"
+            loading={loading}
+            className="w-full mt-2"
+            size="lg"
+          >
+            Login
+          </Button>
+        </form>
+
+        <p className="mt-8 text-center text-slate-400 text-sm">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium hover:underline transition-colors">
+            Register here
+          </Link>
+        </p>
+      </Card>
     </div>
   );
 };
 
 export default Login;
-
