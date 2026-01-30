@@ -4,7 +4,7 @@ const userSchema = new Schema({
    fullname:{
      type:String,
      required:true,
-     trim:true
+     trim:true //built-in setter that automatically removes all leading and trailing whitespace from a string before saving it to the database. 
    },
    username:{
       type:String,
