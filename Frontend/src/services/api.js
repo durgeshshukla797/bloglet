@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://bloglet.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Create axios instance with default config
 const api = axios.create({
